@@ -1758,9 +1758,19 @@ function submitLead(){
     else{document.getElementById(id).style.borderColor='';}
   });
   if(!ok)return;
-  document.getElementById('lf-form').style.opacity='.3';
-  document.getElementById('lf-form').style.pointerEvents='none';
-  document.getElementById('lf-ok').style.display='block';
+  const btn=document.getElementById('lf-btn');
+  btn.disabled=true;btn.textContent='Sending...';
+  fetch('/.netlify/functions/submit-lead',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:n,email:e,phone:p,budget:b,goal:g})
+  })
+  .catch(()=>{})
+  .finally(()=>{
+    document.getElementById('lf-form').style.opacity='.3';
+    document.getElementById('lf-form').style.pointerEvents='none';
+    document.getElementById('lf-ok').style.display='block';
+  });
 }
 </script>
 
