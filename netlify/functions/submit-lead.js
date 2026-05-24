@@ -30,27 +30,42 @@ exports.handler = async (event) => {
 };
 
 async function addToHubSpot({ firstName, lastName, email, phone, budget, goal }) {
-  const token = process.env.HUBSPOT_TOKEN;
-  if (!token) return;
-  await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+  const portalId = process.env.HUBSPOT_PORTAL_ID;
+  const formId   = process.env.HUBSPOT_FORM_ID;
+  if (!portalId || !formId) return;
+  await fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ properties: { firstname: firstName, lastname: lastName, email, phone, hs_lead_status: 'NEW', investment_budget: budget, investment_goal: goal, lead_source: 'dxbpropertyexpert.com' } })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fields: [
+        { name: 'firstname', value: firstName },
+        { name: 'lastname',  value: lastName },
+        { name: 'email',     value: email },
+        { name: 'phone',     value: phone },
+        { name: 'message',   value: `Budget: ${budget} | Goal: ${goal}` }
+      ],
+      context: { pageUri: 'dxbpropertyexpert.com', pageName: 'Landing Page' }
+    })
   });
 }
 
 async function addToBrevo({ firstName, email, phone, budget, goal }) {
-  const key = process.env.BREVO_API_KEY;
-  if (!key) return;
-  await fetch('https://api.brevo.com/v3/contacts', {
+  const url = process.env.BREVO_FORM_URL;
+  if (!url) return;
+  await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-key': key },
-    body: JSON.stringify({ email, attributes: { FIRSTNAME: firstName, SMS: phone, BUDGET: budget, GOAL: goal }, listIds: [3], updateEnabled: true })
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      email,
+      attributes: { FIRSTNAME: firstName, SMS: phone, BUDGET: budget, GOAL: goal },
+      listIds: [3],
+      updateEnabled: true
+    })
   });
 }
 
 async function sendTelegram({ name, email, phone, budget, goal }) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
   const text = `🔔 NEW LEAD — dxbpropertyexpert.com\n\n👤 Name: ${name}\n📧 Email: ${email}\n📱 WhatsApp: ${phone}\n💰 Budget: ${budget}\n🎯 Goal: ${goal}`;
